@@ -1,42 +1,12 @@
 #include <stdio.h>
-#include <string.h>
-
-char ter[10];          // terminals, e.g. i+*$
-char table[10][10];    // precedence relations: < > = or e (error)
-char stack[20], input[20];
-int n, top = 0, i = 0;
-
-// returns position of terminal c in ter[], or -1 if not found
-int pos(char c)
-{
-    int k;
-    for (k = 0; k < n; k++)
-    {
-        if (ter[k] == c)
-            return k;
-    }
-    return -1;
-}
-
-// prints the stack and the remaining input
-void display()
-{
-    int k;
-    printf("\n");
-    for (k = 0; k <= top; k++)
-        printf("%c", stack[k]);
-
-    printf("\t\t");
-    for (k = i; input[k] != '\0'; k++)
-        printf("%c", input[k]);
-    printf("\t\t");
-}
 
 int main()
 {
-    int r, c;
+    char ter[10], table[10][10], stack[20], input[20];
     char rel;
+    int n, top = 0, i = 0, r, c, k;
 
+    // 1. Read terminals and table
     printf("Enter number of terminals: ");
     scanf("%d", &n);
     printf("Enter the terminals: ");
@@ -52,7 +22,7 @@ int main()
         }
     }
 
-    // print the table
+    // 2. Print the table
     printf("\nOPERATOR PRECEDENCE TABLE\n");
     for (c = 0; c < n; c++)
         printf("\t%c", ter[c]);
@@ -63,34 +33,55 @@ int main()
             printf("\t%c", table[r][c]);
     }
 
+    // 3. Read input
     printf("\n\nEnter input string ending with $: ");
     scanf("%s", input);
 
     stack[0] = '$';
-    printf("\nSTACK\t\tINPUT\t\tACTION");
-    display();
+    printf("\nSTACK\t\tINPUT\t\tACTION\n");
 
+    // 4. Parse
     while (1)
     {
+        // print stack
+        for (k = 0; k <= top; k++)
+            printf("%c", stack[k]);
+        printf("\t\t");
+
+        // print remaining input
+        for (k = i; input[k] != '\0'; k++)
+            printf("%c", input[k]);
+        printf("\t\t");
+
+        // accept?
         if (stack[top] == '$' && input[i] == '$')
         {
-            printf("ACCEPT");
+            printf("ACCEPT\n");
             break;
         }
 
-        r = pos(stack[top]);   // row = top of stack
-        c = pos(input[i]);     // column = current input
+        // find row (stack top) and column (input symbol)
+        r = -1;
+        c = -1;
+        for (k = 0; k < n; k++)
+        {
+            if (ter[k] == stack[top])
+                r = k;
+            if (ter[k] == input[i])
+                c = k;
+        }
         if (r == -1 || c == -1)
         {
-            printf("REJECT");
+            printf("REJECT\n");
             break;
         }
+
         rel = table[r][c];
 
         if (rel == '<' || rel == '=')
         {
-            // SHIFT: push the relation, then the symbol
-            printf("SHIFT %c", input[i]);
+            // SHIFT: push relation, then symbol
+            printf("SHIFT %c\n", input[i]);
             top++;
             stack[top] = rel;
             top++;
@@ -99,20 +90,17 @@ int main()
         }
         else if (rel == '>')
         {
-            // REDUCE: pop until '<', then pop the '<' too
+            // REDUCE: pop until '<', then pop '<'
+            printf("REDUCE\n");
             while (stack[top] != '<')
                 top--;
             top--;
-            printf("REDUCE");
         }
         else
         {
-            printf("REJECT");
+            printf("REJECT\n");
             break;
         }
-
-        display();
     }
-    printf("\n");
     return 0;
 }
